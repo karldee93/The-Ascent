@@ -21,7 +21,8 @@ public class Movement : MonoBehaviour
     Vector3 moveDirection;
     public GameObject grapplingGun, windArea;
     public Rigidbody rb;
-    public bool inWindArea;
+    public bool inWindArea, applyWind;
+    float windTimer = 3, applyWindTimer = 3;
     // Start is called before the first frame update
     void Start()
     {
@@ -58,12 +59,49 @@ public class Movement : MonoBehaviour
                 characterVelMomentum = Vector3.zero; // once the momentum is small enough set to 0
             }
         }
+        WindControl();
+    }
+
+    void WindControl()
+    {
+        if (inWindArea)
+        {
+            Debug.Log(windTimer);
+
+            windTimer -= 1f * Time.deltaTime;
+            if (windTimer <= 0)
+            {
+                applyWind = true;
+                windTimer = Random.Range(0, 7);
+                Debug.Log(windTimer);
+            }
+            if (applyWind)
+            {
+                applyWindTimer -= 1f * Time.deltaTime;
+                if (applyWindTimer <= 0)
+                {
+                    int windStrength = Random.Range(0, 16);
+                    float randDirection = Random.Range(0, 2);
+                    windArea.GetComponent<WindArea>().strength = windStrength;
+                    if (randDirection == 0)
+                    {
+                        windArea.GetComponent<WindArea>().direction = new Vector3(5f, 0f, 0f);
+                    }
+                    else if (randDirection == 1)
+                    {
+                        windArea.GetComponent<WindArea>().direction = new Vector3(0f, 0f, 5f);
+                    }
+                    applyWind = false;
+                    applyWindTimer = 3f;
+                }
+            }
+        }
     }
 
     private void FixedUpdate()
     {
-        Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength;
-        if (inWindArea)
+        Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength * Time.deltaTime;
+        if (inWindArea && applyWind)
         {
             rb.AddForce(wind);
         }
@@ -85,7 +123,7 @@ public class Movement : MonoBehaviour
         {
             Debug.Log("send");
             Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength;
-            float momentumAddtionalSpeed = 10f;
+            float momentumAddtionalSpeed = 5f;
             // keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
             characterVelMomentum = wind * momentumAddtionalSpeed;
             rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);

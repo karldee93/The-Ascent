@@ -89,7 +89,7 @@ public class GrapplingGun : MonoBehaviour
             joint.maxDistance = disFromPoint;
             joint.minDistance = disFromPoint;
 
-            joint.spring = 1f; // handles pull and push
+            joint.spring = 100f; // handles pull and push
             joint.damper = 7f;
             joint.massScale = 4.5f;
 
