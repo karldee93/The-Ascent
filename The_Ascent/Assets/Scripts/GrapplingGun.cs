@@ -101,7 +101,7 @@ public class GrapplingGun : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             playerObj.GetComponent<Movement>().pullIn = true;
-            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit raycastHit, 100, whatIsGrappleable))
+            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit raycastHit))
             {
                 debugHitPointTransform.position = raycastHit.point;
                 hookShotPosition = raycastHit.point; // get position to hook

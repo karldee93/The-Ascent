@@ -19,9 +19,9 @@ public class Movement : MonoBehaviour
     float verticalInput;
     public Vector3 characterVelMomentum;
     Vector3 moveDirection;
-    public GameObject grapplingGun, windArea;
+    public GameObject grapplingGun;
     public Rigidbody rb;
-    public bool inWindArea;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -62,35 +62,7 @@ public class Movement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength;
-        if (inWindArea)
-        {
-            rb.AddForce(wind);
-        }
-    }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.tag == "WindArea")
-        {
-            windArea = other.gameObject;
-            inWindArea = true;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-
-        if (other.gameObject.tag == "WindArea")
-        {
-            Debug.Log("send");
-            Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength;
-            float momentumAddtionalSpeed = 10f;
-            // keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
-            characterVelMomentum = wind * momentumAddtionalSpeed;
-            rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);
-            inWindArea = false;
-        }
     }
 
     void PlayerInput()
