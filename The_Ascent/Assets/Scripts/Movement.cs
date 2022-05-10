@@ -13,11 +13,13 @@ public class Movement : MonoBehaviour
     public float jumpCooldown;
     public float airMultiplier;
     bool canJump = true;
+    public bool pullIn, isSwinging;
     bool isGrounded;
     float horizontalInput;
     float verticalInput;
     public Vector3 characterVelMomentum;
     Vector3 moveDirection;
+    public GameObject grapplingGun;
     public Rigidbody rb;
 
     // Start is called before the first frame update
@@ -89,6 +91,85 @@ public class Movement : MonoBehaviour
         {
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
         }
+    }
+    public void HandleHookshotMovement(Transform hookshotTransform, Vector3 hookShotPosition)
+    {
+        grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(0, grapplingGun.GetComponent<GrapplingGun>().gunBarrel.position);
+        grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(1, hookShotPosition);
+        hookshotTransform.LookAt(hookShotPosition);
+        Vector3 hookshotDir = (hookShotPosition - rb.position).normalized; // get direction of hookshot
+        float minSpeed = 10f;
+        float maxSpeed = 40f;
+        // speed is the distence between the player position and hookshot position, will begin fast and slow down as it gets closer
+        // also clamp speed between the min and max speed to ensure a realistic speed
+        float hookshotSpeed = Mathf.Clamp(Vector3.Distance(transform.position, hookShotPosition), minSpeed, maxSpeed);
+        float hookshotSpeedMultiplier = 2f; // this is used incase the player is too close to the hookposition resulting in a slow speed
+        if (pullIn)
+        {
+            rb.drag = groundDrag;
+            moveDirection = hookshotDir * hookshotSpeed * hookshotSpeedMultiplier * Time.deltaTime;
+            rb.MovePosition(transform.position + moveDirection.normalized / 3.5f); // move toward that position
+
+        }
+        // allow for distence check to see if player has reached the position
+        float reachedPosition = 1f;
+        // if player has reached the position change state back to normal
+        if (Vector3.Distance(transform.position, hookShotPosition) < reachedPosition)
+        {
+            grapplingGun.GetComponent<GrapplingGun>().lr.positionCount = 0;
+            rb.drag = 0;
+            pullIn = false;
+            StopHookshot();
+        }
+        // if hookshot is attemped while moving cancel current hookshot
+        if (CancelHookshot())
+        {
+            float momentumAddtionalSpeed = 2.5f;
+            // keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
+            characterVelMomentum = hookshotDir * hookshotSpeed * momentumAddtionalSpeed;
+            rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);
+            StopHookshot();
+        }
+        if (TestInputJump() && pullIn)
+        {
+            float momentumAddtionalSpeed = 2.5f;
+            // keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
+            characterVelMomentum = hookshotDir * hookshotSpeed * momentumAddtionalSpeed;
+            rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);
+            rb.AddForce(transform.up * 6, ForceMode.Impulse);
+            StopHookshot();
+        }
+        if (SwitchToSwing())
+        {
+            float momentumAddtionalSpeed = 2.5f;
+            characterVelMomentum = hookshotDir * hookshotSpeed * momentumAddtionalSpeed;
+            rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);
+            grapplingGun.GetComponent<GrapplingGun>().lr.positionCount = 0;
+            grapplingGun.GetComponent<GrapplingGun>().state = GrapplingGun.State.Normal;
+            rb.drag = 0;
+            pullIn = false;
+        }
+    }
+    private bool CancelHookshot()
+    {
+        return Input.GetKeyDown(KeyCode.E);
+    }
+    private void StopHookshot()
+    {
+        grapplingGun.GetComponent<GrapplingGun>().lr.positionCount = 0;
+        grapplingGun.GetComponent<GrapplingGun>().state = GrapplingGun.State.Normal;
+        rb.drag = 0;
+        pullIn = false;
+    }
+
+    public bool SwitchToSwing()
+    {
+        return (Input.GetKey(KeyCode.Q));
+    }
+
+    private bool TestInputJump()
+    {
+        return Input.GetKey(KeyCode.Space);
     }
     void SpeedLimit()
     {
