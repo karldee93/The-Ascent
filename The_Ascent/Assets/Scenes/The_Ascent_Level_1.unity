@@ -645,7 +645,7 @@ MonoBehaviour:
   wallDistance: 1
   minimumJumpHeight: 1.5
   wallRunGravity: 1
-  wallJumpForce: 6
+  wallJumpForce: 7
   orientation: {fileID: 1470769766}
   moveSpeed: 7
   groundDrag: 5
