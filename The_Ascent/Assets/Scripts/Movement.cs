@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+    [SerializeField] float wallDistance = 0.5f;
+    [SerializeField] float minimumJumpHeight = 1.5f;
+    [SerializeField] float wallRunGravity;
+    [SerializeField] float wallJumpForce;
     public Transform orientation;
     public float moveSpeed;
     public float groundDrag;
@@ -19,10 +23,11 @@ public class Movement : MonoBehaviour
     float verticalInput;
     public Vector3 characterVelMomentum;
     Vector3 moveDirection;
-    public GameObject grapplingGun, windArea;
+    public GameObject grapplingGun, windArea, playerObj;
     public Rigidbody rb;
-    public bool inWindArea, applyWind;
+    public bool inWindArea, applyWind, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
     float windTimer = 3, applyWindTimer = 3;
+    RaycastHit leftWallHit, rightWallHit;
     // Start is called before the first frame update
     void Start()
     {
@@ -37,6 +42,7 @@ public class Movement : MonoBehaviour
 
         PlayerInput();
         SpeedLimit();
+        CheckWall();
         // apply drag to player
         if (isGrounded)
         {
@@ -259,5 +265,74 @@ public class Movement : MonoBehaviour
     void ResetJump()
     {
         canJump = true;
+    }
+
+    void CheckWall()
+    {
+        wallLeft = Physics.Raycast(transform.position, -playerObj.transform.right, out leftWallHit, wallDistance);
+        wallRight = Physics.Raycast(transform.position, playerObj.transform.right, out rightWallHit, wallDistance);
+        wallLeftOrientation = Physics.Raycast(transform.position, -orientation.right, wallDistance);
+        wallRightOrientation = Physics.Raycast(transform.position, orientation.right, wallDistance);
+
+
+        if (CanWallRun())
+        {
+            if (wallLeft)
+            {
+                StartWallRun();
+                Debug.Log("runnnn");
+            }
+            else if (wallRight)
+            {
+                StartWallRun();
+                Debug.Log("runnnn right");
+            }
+            else
+            {
+                StopWallRun();
+            }
+        }
+        else
+        {
+            StopWallRun();
+        }
+    }
+
+    bool CanWallRun()
+    {
+        return !Physics.Raycast(transform.position, Vector3.down, minimumJumpHeight);
+    }
+
+    void StartWallRun()
+    {
+        if (wallRightOrientation || wallLeftOrientation)
+        {
+            MovePlayer();
+        }
+
+        rb.useGravity = false;
+
+        rb.AddForce(Vector3.down * wallRunGravity, ForceMode.Force);
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (wallLeft)
+            {
+                Vector3 wallJumpDir = transform.up + leftWallHit.normal;
+                rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+                rb.AddForce(wallJumpDir * wallJumpForce * 85, ForceMode.Force);
+            }
+            else if (wallRight)
+            {
+                Vector3 wallJumpDir = transform.up + rightWallHit.normal;
+                rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
+                rb.AddForce(wallJumpDir * wallJumpForce * 85, ForceMode.Force);
+            }
+        }
+    }
+
+    void StopWallRun()
+    {
+        rb.useGravity = true;
     }
 }
