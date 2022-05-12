@@ -15,8 +15,9 @@ public class GrapplingGun : MonoBehaviour
     private Vector3 grapplePoint; // point to grapple to
     public LayerMask whatIsGrappleable;
     public Transform gunBarrel, cam, player;
-    private float maxDistance = 30f;
+    private float maxDistance = 30f, fakePlatformTimer = 1f;
     private SpringJoint joint;
+    RaycastHit raycastHit;
     public State state; // hold current state
     public enum State
     {
@@ -49,7 +50,7 @@ public class GrapplingGun : MonoBehaviour
                 HandleHookshotRope();
                 break;
             case State.HookshotPullPlayer:
-                playerObj.GetComponent<Movement>().HandleHookshotMovement(hookshotTransform, hookShotPosition);
+                playerObj.GetComponent<Movement>().HandleHookshotMovement(hookshotTransform, hookShotPosition, raycastHit);
                 break;
 
         }
@@ -65,7 +66,7 @@ public class GrapplingGun : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        
+
     }
     private void LateUpdate()
     {
@@ -85,7 +86,7 @@ public class GrapplingGun : MonoBehaviour
             joint.connectedAnchor = grapplePoint;
 
             float disFromPoint = Vector3.Distance(player.position, grapplePoint);
-            
+
             joint.maxDistance = disFromPoint;
             joint.minDistance = disFromPoint;
 
@@ -94,6 +95,11 @@ public class GrapplingGun : MonoBehaviour
             joint.massScale = 4.5f;
 
             lr.positionCount = 2;
+
+            if (hit.collider.tag == "FakePlatform")
+            {
+                StartCoroutine(FakePlatformFall(hit));
+            }
         }
     }
     private void HandleHookshotStart()
@@ -101,7 +107,7 @@ public class GrapplingGun : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             playerObj.GetComponent<Movement>().pullIn = true;
-            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit raycastHit, 100, whatIsGrappleable))
+            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, 100, whatIsGrappleable))
             {
                 debugHitPointTransform.position = raycastHit.point;
                 hookShotPosition = raycastHit.point; // get position to hook
@@ -110,26 +116,19 @@ public class GrapplingGun : MonoBehaviour
                 hookshotTransform.localScale = Vector3.zero;
                 state = State.HookshotRope; // send player toward position
                 //playerObj.GetComponent<Movement>().HandleHookshotMovement(hookshotTransform, hookShotPosition);
-            }
+                Debug.Log(raycastHit);
+                if (raycastHit.collider.tag == "FakePlatform")
+                {
+                    StartCoroutine(FakePlatformFall(raycastHit));
 
+                }
+            }
         }
-      
-        //playerObj.GetComponent<Movement>().HandleHookshotMovement(hookshotTransform, hookShotPosition);
     }
     private void HandleHookshotRope()
     {
         lr.positionCount = 2;
-        //hookshotTransform.LookAt(hookShotPosition); // look at the position of the hookshot
-        //// scale the rope size and define speed for rope to travel at
-        //float hookshotRopeSpeed = 200f;
-        //hookshotSize += hookshotRopeSpeed * Time.deltaTime;
-        //hookshotTransform.localScale = new Vector3(1, 1, hookshotSize);
         state = State.HookshotPullPlayer; // send player toward position
-        // if hookshotsize is larger than the distence toward the hookshot position then rope has reached the hookshot position
-        //if (hookshotSize >= (Vector3.Distance(hookshotTransform.position, hookShotPosition)))
-        //{
-            
-        //}
     }
     void DrawRope()
     {
@@ -139,6 +138,29 @@ public class GrapplingGun : MonoBehaviour
         }
         lr.SetPosition(0, gunBarrel.position);
         lr.SetPosition(1, grapplePoint);
+    }
+
+    IEnumerator FakePlatformFall(RaycastHit hit)
+    {
+        if (state != State.HookshotRope)
+        {
+            // wait certain amount of seconds
+            Invoke("StopGrapple", 1.5f);
+            yield return new WaitForSeconds(1f);
+            hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
+            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
+            hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            Destroy(hit.collider.gameObject, 3f);
+        }
+        else
+        {
+            yield return new WaitForSeconds(1f);
+            hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
+            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
+            hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            Destroy(hit.collider.gameObject, 3f);
+        }
+
     }
 
     void StopGrapple()

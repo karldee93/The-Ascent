@@ -8,6 +8,7 @@ public class Movement : MonoBehaviour
     [SerializeField] float minimumJumpHeight = 1.5f;
     [SerializeField] float wallRunGravity;
     [SerializeField] float wallJumpForce;
+    public CameraMovement camMove;
     public Transform orientation;
     public float moveSpeed;
     public float groundDrag;
@@ -18,7 +19,7 @@ public class Movement : MonoBehaviour
     public float airMultiplier;
     bool canJump = true;
     public bool pullIn, isSwinging;
-    bool isGrounded;
+    bool isGrounded, shakeCamera = true;
     float horizontalInput;
     float verticalInput;
     public Vector3 characterVelMomentum;
@@ -26,8 +27,8 @@ public class Movement : MonoBehaviour
     public GameObject grapplingGun, windArea, playerObj;
     public Rigidbody rb;
     public bool inWindArea, applyWind, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
-    float windTimer = 3, applyWindTimer = 3;
-    RaycastHit leftWallHit, rightWallHit;
+    float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f;
+    RaycastHit leftWallHit, rightWallHit, checkPlatform;
     // Start is called before the first frame update
     void Start()
     {
@@ -43,6 +44,7 @@ public class Movement : MonoBehaviour
         PlayerInput();
         SpeedLimit();
         CheckWall();
+        CheckPlatforms();
         // apply drag to player
         if (isGrounded)
         {
@@ -164,8 +166,16 @@ public class Movement : MonoBehaviour
             rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
         }
     }
-    public void HandleHookshotMovement(Transform hookshotTransform, Vector3 hookShotPosition)
+    public void HandleHookshotMovement(Transform hookshotTransform, Vector3 hookShotPosition, RaycastHit raycastHit)
     {
+        if(raycastHit.collider.tag == "FakePlatform")
+        {
+            platformFallTimer -= 1 * Time.deltaTime;
+            if(platformFallTimer <= 0)
+            {
+                StopHookshot();
+            }
+        }
         grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(0, grapplingGun.GetComponent<GrapplingGun>().gunBarrel.position);
         grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(1, hookShotPosition);
         hookshotTransform.LookAt(hookShotPosition);
@@ -226,8 +236,9 @@ public class Movement : MonoBehaviour
     {
         return Input.GetKeyDown(KeyCode.E);
     }
-    private void StopHookshot()
+    public void StopHookshot()
     {
+        platformFallTimer = 1f;
         grapplingGun.GetComponent<GrapplingGun>().lr.positionCount = 0;
         grapplingGun.GetComponent<GrapplingGun>().state = GrapplingGun.State.Normal;
         rb.drag = 0;
@@ -265,6 +276,28 @@ public class Movement : MonoBehaviour
     void ResetJump()
     {
         canJump = true;
+    }
+
+    void CheckPlatforms()
+    {
+        if (Physics.Raycast(transform.position, Vector3.down, out checkPlatform, minimumJumpHeight))
+        {
+            if (checkPlatform.collider.tag == "FakePlatform")
+            {
+                if (shakeCamera)
+                {
+                    StartCoroutine(camMove.Shake(1.5f, .03f));
+                    shakeCamera = false;
+                }
+                    checkPlatform.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 50, ForceMode.Force);
+                    checkPlatform.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+                    Destroy(checkPlatform.collider.gameObject, 3f);
+            }
+        }
+        else
+        {
+            shakeCamera = true;
+        }
     }
 
     void CheckWall()
