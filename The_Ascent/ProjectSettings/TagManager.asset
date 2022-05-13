@@ -6,6 +6,7 @@ TagManager:
   tags:
   - WindArea
   - FakePlatform
+  - Spawner
   layers:
   - Default
   - TransparentFX

@@ -18,8 +18,8 @@ public class Movement : MonoBehaviour
     public float jumpCooldown;
     public float airMultiplier;
     bool canJump = true;
-    public bool pullIn, isSwinging;
-    bool isGrounded, shakeCamera = true;
+    public bool pullIn, isSwinging, meteorHasHit;
+    public bool isGrounded, shakeCamera = true;
     float horizontalInput;
     float verticalInput;
     public Vector3 characterVelMomentum;
@@ -168,14 +168,6 @@ public class Movement : MonoBehaviour
     }
     public void HandleHookshotMovement(Transform hookshotTransform, Vector3 hookShotPosition, RaycastHit raycastHit)
     {
-        if(raycastHit.collider.tag == "FakePlatform")
-        {
-            platformFallTimer -= 1 * Time.deltaTime;
-            if(platformFallTimer <= 0)
-            {
-                StopHookshot();
-            }
-        }
         grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(0, grapplingGun.GetComponent<GrapplingGun>().gunBarrel.position);
         grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(1, hookShotPosition);
         hookshotTransform.LookAt(hookShotPosition);
@@ -186,6 +178,19 @@ public class Movement : MonoBehaviour
         // also clamp speed between the min and max speed to ensure a realistic speed
         float hookshotSpeed = Mathf.Clamp(Vector3.Distance(transform.position, hookShotPosition), minSpeed, maxSpeed);
         float hookshotSpeedMultiplier = 2f; // this is used incase the player is too close to the hookposition resulting in a slow speed
+
+        if (raycastHit.collider.tag == "FakePlatform")
+        {
+            platformFallTimer -= 1 * Time.deltaTime;
+            if (platformFallTimer <= 0)
+            {
+                float momentumAddtionalSpeed = 2.5f;
+                // keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
+                characterVelMomentum = hookshotDir * hookshotSpeed * momentumAddtionalSpeed;
+                rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);
+                StopHookshot();
+            }
+        }
         if (pullIn)
         {
             rb.drag = groundDrag;
