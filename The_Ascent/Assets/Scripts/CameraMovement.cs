@@ -8,6 +8,8 @@ public class CameraMovement : MonoBehaviour
 
     public Transform orientation;
 
+    public bool canMoveCam;
+
     float xRotation = 0f;
     float yRotation = 0f;
     // Start is called before the first frame update
@@ -19,6 +21,7 @@ public class CameraMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSpeed * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSpeed * Time.deltaTime;
 

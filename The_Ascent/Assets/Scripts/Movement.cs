@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
 public class Movement : MonoBehaviour
 {
     [SerializeField] float wallDistance = 0.5f;
@@ -12,14 +12,14 @@ public class Movement : MonoBehaviour
     public Transform orientation;
     public float moveSpeed;
     public float groundDrag;
-    public LayerMask whatIsGround;
+    public LayerMask whatIsGround, whatIsWall;
     public float playerHeight;
     public float jumpForce;
     public float jumpCooldown;
     public float airMultiplier;
     bool canJump = true;
-    public bool pullIn, isSwinging, meteorHasHit;
-    public bool isGrounded, shakeCamera = true;
+    public bool pullIn, isSwinging;
+    public bool isGrounded, shakeCamera = true, canMove;
     float horizontalInput;
     float verticalInput;
     public Vector3 characterVelMomentum;
@@ -27,33 +27,45 @@ public class Movement : MonoBehaviour
     public GameObject grapplingGun, windArea, playerObj;
     public Rigidbody rb;
     public bool inWindArea, applyWind, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
-    float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f;
+    float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f, timeTaken;
     RaycastHit leftWallHit, rightWallHit, checkPlatform;
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+        canMove = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
 
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+        //canMove = Physics.Raycast(transform.position, Vector3.down, 5f, whatIsGround);
         PlayerInput();
         SpeedLimit();
         CheckWall();
         CheckPlatforms();
+        WindControl();
+        TrackTime();
         // apply drag to player
         if (isGrounded)
         {
             rb.drag = groundDrag;
-            MovePlayer();
         }
         else
         {
             rb.drag = 0;
+        }
+        if (!isSwinging && canMove)
+        {
+            MovePlayer();
+        }
+        if (isSwinging && Input.GetKey(KeyCode.Space))
+        {
+            Jump();
+            grapplingGun.GetComponent<GrapplingGun>().StopGrapple();
         }
         rb.velocity += characterVelMomentum; // increase velocity by the momentum
         // provide a constant reduction to momentum
@@ -67,21 +79,28 @@ public class Movement : MonoBehaviour
                 characterVelMomentum = Vector3.zero; // once the momentum is small enough set to 0
             }
         }
-        WindControl();
+        if (gameObject.transform.position.y < -5)
+        {
+            SceneManager.LoadScene(0);
+        }
+            
+    }
+
+    void TrackTime()
+    {
+        timeTaken += 1 * Time.deltaTime;
+        Debug.Log(timeTaken);
     }
 
     void WindControl()
     {
         if (inWindArea)
         {
-            Debug.Log(windTimer);
-
             windTimer -= 1f * Time.deltaTime;
             if (windTimer <= 0)
             {
                 applyWind = true;
                 windTimer = Random.Range(0, 7);
-                Debug.Log(windTimer);
             }
             if (applyWind)
             {
@@ -122,6 +141,19 @@ public class Movement : MonoBehaviour
             windArea = other.gameObject;
             inWindArea = true;
         }
+        else if (other.gameObject.tag == "WallRun")
+        {
+            canMove = false;
+        }
+        else if(other.gameObject.tag == "EndPoint")
+        {
+            Debug.Log("Compelted");
+        }
+        else if(other.gameObject.tag == "HookAmmo")
+        {
+            grapplingGun.GetComponent<GrapplingGun>().hookShotAmmo += 1;
+            Destroy(other.gameObject);
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -129,13 +161,17 @@ public class Movement : MonoBehaviour
 
         if (other.gameObject.tag == "WindArea")
         {
-            Debug.Log("send");
-            Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength;
-            float momentumAddtionalSpeed = 5f;
-            // keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
-            characterVelMomentum = wind * momentumAddtionalSpeed;
-            rb.AddForce(characterVelMomentum / 5, ForceMode.Impulse);
+            //Debug.Log("send");
+            //Vector3 wind = windArea.GetComponent<WindArea>().direction * windArea.GetComponent<WindArea>().strength;
+            //float momentumAddtionalSpeed = 1f;
+            //// keep the momentum of the currect hook shot and add some extra to accoutn for the jump momentum
+            //characterVelMomentum = wind * momentumAddtionalSpeed;
+            //rb.AddForce(characterVelMomentum / 1, ForceMode.Impulse);
             inWindArea = false;
+        }
+        else if (other.gameObject.tag == "WallRun")
+        {
+            canMove = true;
         }
     }
 
@@ -273,9 +309,18 @@ public class Movement : MonoBehaviour
 
     void Jump()
     {
-        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // ensure that velocity is 0 so height is always the same
+        if (isSwinging)
+        {
+            rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // ensure that velocity is 0 so height is always the same
 
-        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+            rb.AddForce(transform.up * 8, ForceMode.Impulse);
+        }
+        else
+        {
+            rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // ensure that velocity is 0 so height is always the same
+
+            rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+        }
     }
 
     void ResetJump()
@@ -291,12 +336,13 @@ public class Movement : MonoBehaviour
             {
                 if (shakeCamera)
                 {
-                    StartCoroutine(camMove.Shake(1.5f, .03f));
-                    shakeCamera = false;
+                    //StartCoroutine(camMove.Shake(1.5f, .03f));
+                    //shakeCamera = false;
                 }
-                    checkPlatform.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 50, ForceMode.Force);
-                    checkPlatform.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-                    Destroy(checkPlatform.collider.gameObject, 3f);
+                StartCoroutine(grapplingGun.GetComponent<GrapplingGun>().FakePlatformFall(checkPlatform));
+                //checkPlatform.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 50, ForceMode.Force);
+                //checkPlatform.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+                //Destroy(checkPlatform.collider.gameObject, 3f);
             }
         }
         else
@@ -307,8 +353,8 @@ public class Movement : MonoBehaviour
 
     void CheckWall()
     {
-        wallLeft = Physics.Raycast(transform.position, -playerObj.transform.right, out leftWallHit, wallDistance);
-        wallRight = Physics.Raycast(transform.position, playerObj.transform.right, out rightWallHit, wallDistance);
+        wallLeft = Physics.Raycast(transform.position, -playerObj.transform.right, out leftWallHit, wallDistance, whatIsWall);
+        wallRight = Physics.Raycast(transform.position, playerObj.transform.right, out rightWallHit, wallDistance, whatIsWall);
         wallLeftOrientation = Physics.Raycast(transform.position, -orientation.right, wallDistance);
         wallRightOrientation = Physics.Raycast(transform.position, orientation.right, wallDistance);
 
@@ -358,17 +404,16 @@ public class Movement : MonoBehaviour
             {
                 Vector3 wallJumpDir = transform.up + leftWallHit.normal;
                 rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-                rb.AddForce(wallJumpDir * wallJumpForce * 85, ForceMode.Force);
+                rb.AddForce(wallJumpDir * wallJumpForce * 100, ForceMode.Force);
             }
             else if (wallRight)
             {
                 Vector3 wallJumpDir = transform.up + rightWallHit.normal;
                 rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-                rb.AddForce(wallJumpDir * wallJumpForce * 85, ForceMode.Force);
+                rb.AddForce(wallJumpDir * wallJumpForce * 100, ForceMode.Force);
             }
         }
     }
-
     void StopWallRun()
     {
         rb.useGravity = true;

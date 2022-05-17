@@ -7,6 +7,9 @@ TagManager:
   - WindArea
   - FakePlatform
   - Spawner
+  - WallRun
+  - EndPoint
+  - HookAmmo
   layers:
   - Default
   - TransparentFX
@@ -17,7 +20,7 @@ TagManager:
   - 
   - whatIsGround
   - WindArea
-  - 
+  - whatIsWall
   - 
   - 
   - 

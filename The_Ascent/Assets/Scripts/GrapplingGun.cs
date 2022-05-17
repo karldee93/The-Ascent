@@ -15,7 +15,8 @@ public class GrapplingGun : MonoBehaviour
     private Vector3 grapplePoint; // point to grapple to
     public LayerMask whatIsGrappleable;
     public Transform gunBarrel, cam, player;
-    private float maxDistance = 30f, fakePlatformTimer = 1f;
+    private float maxDistance = 50f, fakePlatformTimer = 1f;
+    public int hookShotAmmo = 0;
     private SpringJoint joint;
     RaycastHit raycastHit;
     public State state; // hold current state
@@ -39,6 +40,7 @@ public class GrapplingGun : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Debug.Log(hookShotAmmo + "ammo");
         switch (state)
         {
             default:
@@ -77,7 +79,7 @@ public class GrapplingGun : MonoBehaviour
     {
         RaycastHit hit;
 
-        if (Physics.Raycast(cam.position, cam.forward, out hit, maxDistance, whatIsGrappleable))
+        if (Physics.Raycast(cam.position, cam.forward, out hit, maxDistance))
         {
             playerObj.GetComponent<Movement>().isSwinging = true;
             grapplePoint = hit.point;
@@ -90,7 +92,7 @@ public class GrapplingGun : MonoBehaviour
             joint.maxDistance = disFromPoint;
             joint.minDistance = disFromPoint;
 
-            joint.spring = 100f; // handles pull and push
+            joint.spring = 50f; // handles pull and push
             joint.damper = 7f;
             joint.massScale = 4.5f;
 
@@ -104,10 +106,11 @@ public class GrapplingGun : MonoBehaviour
     }
     private void HandleHookshotStart()
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.E) && hookShotAmmo > 0)
         {
+            hookShotAmmo -= 1;
             playerObj.GetComponent<Movement>().pullIn = true;
-            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, 100, whatIsGrappleable))
+            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, maxDistance))
             {
                 debugHitPointTransform.position = raycastHit.point;
                 hookShotPosition = raycastHit.point; // get position to hook
@@ -140,13 +143,13 @@ public class GrapplingGun : MonoBehaviour
         lr.SetPosition(1, grapplePoint);
     }
 
-    IEnumerator FakePlatformFall(RaycastHit hit)
+    public IEnumerator FakePlatformFall(RaycastHit hit)
     {
         if (state != State.HookshotRope)
         {
             // wait certain amount of seconds
-            Invoke("StopGrapple", 1.5f);
-            yield return new WaitForSeconds(1f);
+            Invoke("StopGrapple", 3f);
+            yield return new WaitForSeconds(2.5f);
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
@@ -154,16 +157,16 @@ public class GrapplingGun : MonoBehaviour
         }
         else
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(3f);
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-            Destroy(hit.collider.gameObject, 3f);
+            Destroy(hit.collider.gameObject, 6f);
         }
 
     }
 
-    void StopGrapple()
+    public void StopGrapple()
     {
         playerObj.GetComponent<Movement>().isSwinging = false;
         Debug.Log("gone");
