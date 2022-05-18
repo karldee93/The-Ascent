@@ -10,6 +10,7 @@ TagManager:
   - WallRun
   - EndPoint
   - HookAmmo
+  - WindArea2
   layers:
   - Default
   - TransparentFX

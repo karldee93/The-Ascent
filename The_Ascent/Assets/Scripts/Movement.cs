@@ -9,6 +9,7 @@ public class Movement : MonoBehaviour
     [SerializeField] float wallRunGravity;
     [SerializeField] float wallJumpForce;
     public CameraMovement camMove;
+    public GameObject uiManager;
     public Transform orientation;
     public float moveSpeed;
     public float groundDrag;
@@ -26,7 +27,7 @@ public class Movement : MonoBehaviour
     Vector3 moveDirection;
     public GameObject grapplingGun, windArea, playerObj;
     public Rigidbody rb;
-    public bool inWindArea, applyWind, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
+    public bool inWindArea, applyWind, windType1, windType2, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
     float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f, timeTaken;
     RaycastHit leftWallHit, rightWallHit, checkPlatform;
     // Start is called before the first frame update
@@ -40,7 +41,6 @@ public class Movement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
         isGrounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
         //canMove = Physics.Raycast(transform.position, Vector3.down, 5f, whatIsGround);
         PlayerInput();
@@ -83,13 +83,13 @@ public class Movement : MonoBehaviour
         {
             SceneManager.LoadScene(0);
         }
-            
+
     }
 
     void TrackTime()
     {
         timeTaken += 1 * Time.deltaTime;
-        Debug.Log(timeTaken);
+        uiManager.GetComponent<UIManager>().timer = timeTaken;
     }
 
     void WindControl()
@@ -105,21 +105,43 @@ public class Movement : MonoBehaviour
             if (applyWind)
             {
                 applyWindTimer -= 1f * Time.deltaTime;
-                if (applyWindTimer <= 0)
+                if (windType1)
                 {
-                    int windStrength = Random.Range(0, 16);
-                    float randDirection = Random.Range(0, 2);
-                    windArea.GetComponent<WindArea>().strength = windStrength;
-                    if (randDirection == 0)
+                    if (applyWindTimer <= 0)
                     {
-                        windArea.GetComponent<WindArea>().direction = new Vector3(5f, 0f, 0f);
+                        int windStrength = Random.Range(0, 16);
+                        float randDirection = Random.Range(0, 2);
+                        windArea.GetComponent<WindArea>().strength = windStrength;
+                        if (randDirection == 0)
+                        {
+                            windArea.GetComponent<WindArea>().direction = new Vector3(5f, 0f, 0f);
+                        }
+                        else if (randDirection == 1)
+                        {
+                            windArea.GetComponent<WindArea>().direction = new Vector3(0f, 0f, 5f);
+                        }
+                        applyWind = false;
+                        applyWindTimer = 3f;
                     }
-                    else if (randDirection == 1)
+                }
+                else if (windType2)
+                {
+                    if (applyWindTimer <= 0)
                     {
-                        windArea.GetComponent<WindArea>().direction = new Vector3(0f, 0f, 5f);
+                        int windStrength = 60;
+                        float randDirection = Random.Range(0, 2);
+                        windArea.GetComponent<WindArea>().strength = windStrength;
+                        if (randDirection == 0)
+                        {
+                            windArea.GetComponent<WindArea>().direction = new Vector3(5f, 0f, 0f);
+                        }
+                        else if (randDirection == 1)
+                        {
+                            windArea.GetComponent<WindArea>().direction = new Vector3(0f, 0f, 5f);
+                        }
+                        applyWind = false;
+                        applyWindTimer = 3f;
                     }
-                    applyWind = false;
-                    applyWindTimer = 3f;
                 }
             }
         }
@@ -140,18 +162,26 @@ public class Movement : MonoBehaviour
         {
             windArea = other.gameObject;
             inWindArea = true;
+            windType1 = true;
+        }
+        else if (other.gameObject.tag == "WindArea2")
+        {
+            windArea = other.gameObject;
+            inWindArea = true;
+            windType2 = true;
         }
         else if (other.gameObject.tag == "WallRun")
         {
             canMove = false;
         }
-        else if(other.gameObject.tag == "EndPoint")
+        else if (other.gameObject.tag == "EndPoint")
         {
             Debug.Log("Compelted");
         }
-        else if(other.gameObject.tag == "HookAmmo")
+        else if (other.gameObject.tag == "HookAmmo")
         {
             grapplingGun.GetComponent<GrapplingGun>().hookShotAmmo += 1;
+            uiManager.GetComponent<UIManager>().ammo = grapplingGun.GetComponent<GrapplingGun>().hookShotAmmo;
             Destroy(other.gameObject);
         }
     }

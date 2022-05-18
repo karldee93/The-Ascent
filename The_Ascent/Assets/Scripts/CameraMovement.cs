@@ -15,7 +15,7 @@ public class CameraMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked; // locks the cursor to the centre of the screen
+        //Cursor.lockState = CursorLockMode.Locked; // locks the cursor to the centre of the screen
     }
 
     // Update is called once per frame

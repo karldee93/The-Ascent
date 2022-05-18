@@ -8,7 +8,7 @@ public class GrapplingGun : MonoBehaviour
     [SerializeField] private Transform hookshotTransform;
     private Vector3 velocity, hookShotPosition, characterVelMomentum;
     private float hookshotSize;
-    public GameObject playerObj;
+    public GameObject playerObj, uiManager;
     Vector3 moveDirection;
 
     public LineRenderer lr;
@@ -40,7 +40,6 @@ public class GrapplingGun : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(hookShotAmmo + "ammo");
         switch (state)
         {
             default:
@@ -109,6 +108,7 @@ public class GrapplingGun : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E) && hookShotAmmo > 0)
         {
             hookShotAmmo -= 1;
+            uiManager.GetComponent<UIManager>().ammo = hookShotAmmo;
             playerObj.GetComponent<Movement>().pullIn = true;
             if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, maxDistance))
             {
@@ -119,7 +119,6 @@ public class GrapplingGun : MonoBehaviour
                 hookshotTransform.localScale = Vector3.zero;
                 state = State.HookshotRope; // send player toward position
                 //playerObj.GetComponent<Movement>().HandleHookshotMovement(hookshotTransform, hookShotPosition);
-                Debug.Log(raycastHit);
                 if (raycastHit.collider.tag == "FakePlatform")
                 {
                     StartCoroutine(FakePlatformFall(raycastHit));
@@ -148,20 +147,20 @@ public class GrapplingGun : MonoBehaviour
         if (state != State.HookshotRope)
         {
             // wait certain amount of seconds
-            Invoke("StopGrapple", 3f);
-            yield return new WaitForSeconds(2.5f);
+            Invoke("StopGrapple", 2.5f);
+            yield return new WaitForSeconds(2f);
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-            Destroy(hit.collider.gameObject, 3f);
+            Destroy(hit.collider.gameObject, 4f);
         }
         else
         {
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(1f);
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-            Destroy(hit.collider.gameObject, 6f);
+            Destroy(hit.collider.gameObject, 5f);
         }
 
     }
