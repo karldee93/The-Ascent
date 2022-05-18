@@ -29,6 +29,7 @@ public class Movement : MonoBehaviour
     public Rigidbody rb;
     public bool inWindArea, applyWind, windType1, windType2, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
     float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f, timeTaken;
+    public int minCounter;
     RaycastHit leftWallHit, rightWallHit, checkPlatform;
     // Start is called before the first frame update
     void Start()
@@ -88,8 +89,14 @@ public class Movement : MonoBehaviour
 
     void TrackTime()
     {
-        timeTaken += 1 * Time.deltaTime;
         uiManager.GetComponent<UIManager>().timer = timeTaken;
+        timeTaken += 1f * Time.deltaTime;
+        if (timeTaken >= 60f)
+        {
+            minCounter += 1;
+            uiManager.GetComponent<UIManager>().minCount = minCounter;
+            timeTaken = 0f;
+        }
     }
 
     void WindControl()
@@ -343,7 +350,7 @@ public class Movement : MonoBehaviour
         {
             rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // ensure that velocity is 0 so height is always the same
 
-            rb.AddForce(transform.up * 8, ForceMode.Impulse);
+            rb.AddForce(transform.up * 9.5f, ForceMode.Impulse);
         }
         else
         {

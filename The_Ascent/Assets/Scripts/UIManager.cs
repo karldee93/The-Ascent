@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     public float timer;
+    public int minCount;
     public int ammo;
     public Text timerUI;
     public Text ammoUI;
@@ -17,7 +18,7 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        timerUI.text = timer.ToString("f2");
+        timerUI.text = "Timer: " + minCount.ToString() + ":" + timer.ToString("f2");
         ammoUI.text = "Hookshot Ammo: " + ammo.ToString();
     }
 }

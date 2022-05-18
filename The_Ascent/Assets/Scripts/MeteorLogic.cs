@@ -11,7 +11,7 @@ public class MeteorLogic : MonoBehaviour
     float offsetX;
     float offsetZ;
     Vector3 distToPlayer;
-    float explosionForce = 4000f, radius = 9f, height = 4f;
+    float explosionForce = 1500f, radius = 13f, height = 4f;
     // Start is called before the first frame update
     void Start()
     {
@@ -47,20 +47,23 @@ public class MeteorLogic : MonoBehaviour
         {
             // do nothing
         }
+        else if (other.gameObject.tag == "WindArea2")
+        {
+            // do nothing
+        }
         else
         {
             gameObject.GetComponent<SphereCollider>().isTrigger = true;
             if (distToPlayer.magnitude <= radius)
             {
-                Debug.Log(distToPlayer.magnitude);
                 if (distToPlayer.magnitude < 4f)
                 {
-                    explosionForce = 3000f;
-                    height = 2.5f;
+                    explosionForce = 100f;
+                    height = 0.5f;
                 }
                 else
                 {
-                    explosionForce = 4000f;
+                    explosionForce = 1500f;
                     height = 4f;
                 }
                 player.GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, radius, height, ForceMode.Force);

@@ -107,11 +107,11 @@ public class GrapplingGun : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E) && hookShotAmmo > 0)
         {
-            hookShotAmmo -= 1;
-            uiManager.GetComponent<UIManager>().ammo = hookShotAmmo;
             playerObj.GetComponent<Movement>().pullIn = true;
             if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, maxDistance))
             {
+                hookShotAmmo -= 1;
+                uiManager.GetComponent<UIManager>().ammo = hookShotAmmo;
                 debugHitPointTransform.position = raycastHit.point;
                 hookShotPosition = raycastHit.point; // get position to hook
                 hookshotSize = 0f;
@@ -122,7 +122,6 @@ public class GrapplingGun : MonoBehaviour
                 if (raycastHit.collider.tag == "FakePlatform")
                 {
                     StartCoroutine(FakePlatformFall(raycastHit));
-
                 }
             }
         }
