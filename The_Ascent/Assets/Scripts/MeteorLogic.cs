@@ -7,6 +7,7 @@ public class MeteorLogic : MonoBehaviour
     Rigidbody rb;
     GameObject spawner;
     GameObject player;
+    public GameObject smoke, smokeSpawn, explosion;
     public float downwardForce = 1f;
     float offsetX;
     float offsetZ;
@@ -19,8 +20,8 @@ public class MeteorLogic : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         spawner.GetComponent<Meteor>().spawn = true;
         rb = GetComponent<Rigidbody>();
-        offsetX = Random.Range(0, 21);
-        offsetZ = Random.Range(0, 21);
+        offsetX = Random.Range(0, 1);
+        offsetZ = Random.Range(0, 1);
         Vector3 position = gameObject.transform.position;
         position = new Vector3(gameObject.transform.position.x + offsetX, gameObject.transform.position.y, gameObject.transform.position.z + offsetZ);
         gameObject.transform.position = position;
@@ -30,7 +31,7 @@ public class MeteorLogic : MonoBehaviour
     void Update()
     {
         distToPlayer = transform.position - player.transform.position;
-        rb.AddForce(Vector3.down, ForceMode.Force);
+        rb.AddForce(Vector3.down / 2, ForceMode.Force);
         if (gameObject.transform.position.y < -5)
         {
             Destroy(gameObject);
@@ -53,7 +54,11 @@ public class MeteorLogic : MonoBehaviour
         }
         else
         {
-            gameObject.GetComponent<SphereCollider>().isTrigger = true;
+            GameObject tempFlash;
+            tempFlash = Instantiate(smoke, smokeSpawn.transform.position, smoke.transform.rotation);
+            GameObject tempFlash2;
+            tempFlash2 = Instantiate(explosion, smokeSpawn.transform.position, explosion.transform.rotation);
+            //gameObject.GetComponent<SphereCollider>().isTrigger = true;
             if (distToPlayer.magnitude <= radius)
             {
                 if (distToPlayer.magnitude < 4f)
@@ -69,6 +74,8 @@ public class MeteorLogic : MonoBehaviour
                 player.GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, radius, height, ForceMode.Force);
                 //player.GetComponent<Rigidbody>().AddForce(transform.up * 1000);
             }
+            Destroy(tempFlash2, 1f);
+            Destroy(tempFlash, 1f);
             Destroy(gameObject, 1f);
         }
 
