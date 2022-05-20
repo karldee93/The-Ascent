@@ -9,7 +9,6 @@ public class CameraMovement : MonoBehaviour
     public Transform orientation;
 
     public bool canMoveCam;
-
     float xRotation = 0f;
     float yRotation = 0f;
     // Start is called before the first frame update

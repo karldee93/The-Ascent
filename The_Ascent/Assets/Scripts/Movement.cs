@@ -9,6 +9,9 @@ public class Movement : MonoBehaviour
     [SerializeField] float wallRunGravity;
     [SerializeField] float wallJumpForce;
     public CameraMovement camMove;
+    private FOV camFov;
+    private const float NORMAL_FOV = 60f;
+    private const float HOOKSHOT_FOV = 100f;
     public GameObject uiManager;
     public Transform orientation;
     public float moveSpeed;
@@ -31,9 +34,12 @@ public class Movement : MonoBehaviour
     float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f, timeTaken;
     public int minCounter;
     RaycastHit leftWallHit, rightWallHit, checkPlatform;
+    public ParticleSystem speedLines;
+    public AudioSource jump;
     // Start is called before the first frame update
     void Start()
     {
+        camFov = camMove.GetComponent<FOV>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         canMove = true;
@@ -241,6 +247,8 @@ public class Movement : MonoBehaviour
     }
     public void HandleHookshotMovement(Transform hookshotTransform, Vector3 hookShotPosition, RaycastHit raycastHit)
     {
+        camFov.SetCameraFov(HOOKSHOT_FOV);
+        speedLines.Play();
         grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(0, grapplingGun.GetComponent<GrapplingGun>().gunBarrel.position);
         grapplingGun.GetComponent<GrapplingGun>().lr.SetPosition(1, hookShotPosition);
         hookshotTransform.LookAt(hookShotPosition);
@@ -316,11 +324,13 @@ public class Movement : MonoBehaviour
     }
     public void StopHookshot()
     {
+        camFov.SetCameraFov(NORMAL_FOV);
         platformFallTimer = 1f;
         grapplingGun.GetComponent<GrapplingGun>().lr.positionCount = 0;
         grapplingGun.GetComponent<GrapplingGun>().state = GrapplingGun.State.Normal;
         rb.drag = 0;
         pullIn = false;
+        speedLines.Stop();
     }
 
     public bool SwitchToSwing()
@@ -346,6 +356,7 @@ public class Movement : MonoBehaviour
 
     void Jump()
     {
+        jump.Play();
         if (isSwinging)
         {
             rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z); // ensure that velocity is 0 so height is always the same
@@ -437,14 +448,17 @@ public class Movement : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            
             if (wallLeft)
             {
+                jump.Play();
                 Vector3 wallJumpDir = transform.up + leftWallHit.normal;
                 rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
                 rb.AddForce(wallJumpDir * wallJumpForce * 100, ForceMode.Force);
             }
             else if (wallRight)
             {
+                jump.Play();
                 Vector3 wallJumpDir = transform.up + rightWallHit.normal;
                 rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
                 rb.AddForce(wallJumpDir * wallJumpForce * 100, ForceMode.Force);

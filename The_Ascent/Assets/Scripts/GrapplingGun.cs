@@ -10,7 +10,7 @@ public class GrapplingGun : MonoBehaviour
     private float hookshotSize;
     public GameObject playerObj, uiManager;
     Vector3 moveDirection;
-
+    public AudioSource grapplingShot, ropeSnap, swingRope;
     public LineRenderer lr;
     private Vector3 grapplePoint; // point to grapple to
     public LayerMask whatIsGrappleable;
@@ -80,6 +80,7 @@ public class GrapplingGun : MonoBehaviour
 
         if (Physics.Raycast(cam.position, cam.forward, out hit, maxDistance))
         {
+            swingRope.Play();
             playerObj.GetComponent<Movement>().isSwinging = true;
             grapplePoint = hit.point;
             joint = player.gameObject.AddComponent<SpringJoint>(); // add a spring joint component to the player
@@ -110,6 +111,7 @@ public class GrapplingGun : MonoBehaviour
             playerObj.GetComponent<Movement>().pullIn = true;
             if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, maxDistance))
             {
+                grapplingShot.Play();
                 hookShotAmmo -= 1;
                 uiManager.GetComponent<UIManager>().ammo = hookShotAmmo;
                 debugHitPointTransform.position = raycastHit.point;
@@ -143,25 +145,40 @@ public class GrapplingGun : MonoBehaviour
 
     public IEnumerator FakePlatformFall(RaycastHit hit)
     {
-        if (state != State.HookshotRope)
+        if (playerObj.GetComponent<Movement>().isSwinging == true)
         {
             // wait certain amount of seconds
             Invoke("StopGrapple", 2.5f);
+
             yield return new WaitForSeconds(2f);
+            hit.collider.gameObject.GetComponent<AudioSource>().enabled = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
-            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
+            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 10, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            yield return new WaitForSeconds(0.5f);
+            ropeSnap.Play();
             Destroy(hit.collider.gameObject, 4f);
+        }
+        else if (state == State.HookshotRope)
+        {
+            yield return new WaitForSeconds(1f);
+            hit.collider.gameObject.GetComponent<AudioSource>().enabled = true;
+            hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
+            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 10, ForceMode.Force);
+            hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            ropeSnap.Play();
+            Destroy(hit.collider.gameObject, 5f);
         }
         else
         {
             yield return new WaitForSeconds(1f);
+            hit.collider.gameObject.GetComponent<AudioSource>().enabled = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
-            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 100, ForceMode.Force);
+            hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 10, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            
             Destroy(hit.collider.gameObject, 5f);
         }
-
     }
 
     public void StopGrapple()

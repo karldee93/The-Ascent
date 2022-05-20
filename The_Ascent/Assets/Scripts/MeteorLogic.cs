@@ -13,6 +13,7 @@ public class MeteorLogic : MonoBehaviour
     float offsetZ;
     Vector3 distToPlayer;
     float explosionForce = 1500f, radius = 13f, height = 4f;
+    public AudioSource fire, impact;
     // Start is called before the first frame update
     void Start()
     {
@@ -20,11 +21,12 @@ public class MeteorLogic : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player");
         spawner.GetComponent<Meteor>().spawn = true;
         rb = GetComponent<Rigidbody>();
-        offsetX = Random.Range(0, 1);
-        offsetZ = Random.Range(0, 1);
+        offsetX = Random.Range(0, 26);
+        offsetZ = Random.Range(0, 26);
         Vector3 position = gameObject.transform.position;
         position = new Vector3(gameObject.transform.position.x + offsetX, gameObject.transform.position.y, gameObject.transform.position.z + offsetZ);
         gameObject.transform.position = position;
+        fire.Play();
     }
 
     // Update is called once per frame
@@ -54,6 +56,10 @@ public class MeteorLogic : MonoBehaviour
         }
         else
         {
+            fire.Stop();
+            impact.Play();
+            GetComponent<MeshRenderer>().enabled = false;
+            GetComponent<SphereCollider>().enabled = false;
             GameObject tempFlash;
             tempFlash = Instantiate(smoke, smokeSpawn.transform.position, smoke.transform.rotation);
             GameObject tempFlash2;
@@ -74,9 +80,9 @@ public class MeteorLogic : MonoBehaviour
                 player.GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, radius, height, ForceMode.Force);
                 //player.GetComponent<Rigidbody>().AddForce(transform.up * 1000);
             }
-            Destroy(tempFlash2, 1f);
-            Destroy(tempFlash, 1f);
-            Destroy(gameObject, 1f);
+            Destroy(tempFlash2, 1.5f);
+            Destroy(tempFlash, 1.5f);
+            Destroy(gameObject, 1.5f);
         }
 
     }

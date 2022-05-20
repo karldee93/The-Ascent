@@ -1,0 +1,31 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class FOV : MonoBehaviour
+{
+
+    private Camera playerCam;
+    private float targetFov;
+    private float fov;
+    // Start is called before the first frame update
+    void Awake()
+    {
+        playerCam = GetComponent<Camera>();
+        targetFov = playerCam.fieldOfView;
+        fov = targetFov;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        float fovSpeed = 4f;
+        fov = Mathf.Lerp(fov, targetFov, Time.deltaTime * fovSpeed);
+        playerCam.fieldOfView = fov;
+    }
+
+    public void SetCameraFov(float targetFov)
+    {
+        this.targetFov = targetFov;
+    }
+}
