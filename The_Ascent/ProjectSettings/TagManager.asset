@@ -11,6 +11,8 @@ TagManager:
   - EndPoint
   - HookAmmo
   - WindArea2
+  - Environment
+  - NormalPlatform
   layers:
   - Default
   - TransparentFX

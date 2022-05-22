@@ -32,6 +32,11 @@ public class MeteorLogic : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (player.GetComponent<Movement>().gameWon == true)
+        {
+            fire.Stop();
+            impact.Stop();
+        }
         distToPlayer = transform.position - player.transform.position;
         rb.AddForce(Vector3.down / 2, ForceMode.Force);
         if (gameObject.transform.position.y < -5)

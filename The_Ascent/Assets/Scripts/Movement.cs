@@ -23,22 +23,26 @@ public class Movement : MonoBehaviour
     public float airMultiplier;
     bool canJump = true;
     public bool pullIn, isSwinging;
-    public bool isGrounded, shakeCamera = true, canMove;
+    public bool isGrounded, shakeCamera = true, canMove, gameWon;
     float horizontalInput;
     float verticalInput;
     public Vector3 characterVelMomentum;
     Vector3 moveDirection;
     public GameObject grapplingGun, windArea, playerObj;
+    private GameObject door, environment, meteorSpawner;
     public Rigidbody rb;
     public bool inWindArea, applyWind, windType1, windType2, wallLeft, wallRight, wallLeftOrientation, wallRightOrientation;
     float windTimer = 3, applyWindTimer = 3, platformFallTimer = 1f, timeTaken;
     public int minCounter;
     RaycastHit leftWallHit, rightWallHit, checkPlatform;
     public ParticleSystem speedLines;
-    public AudioSource jump;
+    public AudioSource jump, backgroundMusic, pickUp;
     // Start is called before the first frame update
     void Start()
     {
+        door = GameObject.FindGameObjectWithTag("EndPoint");
+        environment = GameObject.FindGameObjectWithTag("Environment");
+        meteorSpawner = GameObject.FindGameObjectWithTag("Spawner");
         camFov = camMove.GetComponent<FOV>();
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
@@ -48,49 +52,51 @@ public class Movement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        isGrounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
-        //canMove = Physics.Raycast(transform.position, Vector3.down, 5f, whatIsGround);
-        PlayerInput();
-        SpeedLimit();
-        CheckWall();
-        CheckPlatforms();
-        WindControl();
-        TrackTime();
-        // apply drag to player
-        if (isGrounded)
+        if (!gameWon)
         {
-            rb.drag = groundDrag;
-        }
-        else
-        {
-            rb.drag = 0;
-        }
-        if (!isSwinging && canMove)
-        {
-            MovePlayer();
-        }
-        if (isSwinging && Input.GetKey(KeyCode.Space))
-        {
-            Jump();
-            grapplingGun.GetComponent<GrapplingGun>().StopGrapple();
-        }
-        rb.velocity += characterVelMomentum; // increase velocity by the momentum
-        // provide a constant reduction to momentum
-        if (characterVelMomentum.magnitude >= 0f)
-        {
-            float momentumDrag = 3f; // define drag value to slow momentum down
-            rb.velocity -= characterVelMomentum;
-            characterVelMomentum -= characterVelMomentum * momentumDrag * Time.deltaTime; // reduce momentum by the drag 
-            if (characterVelMomentum.magnitude < .0f)
+            isGrounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+            //canMove = Physics.Raycast(transform.position, Vector3.down, 5f, whatIsGround);
+            PlayerInput();
+            SpeedLimit();
+            CheckWall();
+            CheckPlatforms();
+            WindControl();
+            TrackTime();
+            // apply drag to player
+            if (isGrounded)
             {
-                characterVelMomentum = Vector3.zero; // once the momentum is small enough set to 0
+                rb.drag = groundDrag;
+            }
+            else
+            {
+                rb.drag = 0;
+            }
+            if (!isSwinging && canMove)
+            {
+                MovePlayer();
+            }
+            if (isSwinging && Input.GetKey(KeyCode.Space))
+            {
+                Jump();
+                grapplingGun.GetComponent<GrapplingGun>().StopGrapple();
+            }
+            rb.velocity += characterVelMomentum; // increase velocity by the momentum
+                                                 // provide a constant reduction to momentum
+            if (characterVelMomentum.magnitude >= 0f)
+            {
+                float momentumDrag = 3f; // define drag value to slow momentum down
+                rb.velocity -= characterVelMomentum;
+                characterVelMomentum -= characterVelMomentum * momentumDrag * Time.deltaTime; // reduce momentum by the drag 
+                if (characterVelMomentum.magnitude < .0f)
+                {
+                    characterVelMomentum = Vector3.zero; // once the momentum is small enough set to 0
+                }
+            }
+            if (gameObject.transform.position.y < -5)
+            {
+                SceneManager.LoadScene(1);
             }
         }
-        if (gameObject.transform.position.y < -5)
-        {
-            SceneManager.LoadScene(0);
-        }
-
     }
 
     void TrackTime()
@@ -189,10 +195,18 @@ public class Movement : MonoBehaviour
         }
         else if (other.gameObject.tag == "EndPoint")
         {
+            backgroundMusic.Stop();
+            door.SetActive(false);
+            meteorSpawner.SetActive(false);
+            environment.SetActive(false);
+            gameWon = true;
+            Time.timeScale = 0f;
+            uiManager.GetComponent<PauseMenu>().winScreen.SetActive(true);
             Debug.Log("Compelted");
         }
         else if (other.gameObject.tag == "HookAmmo")
         {
+            pickUp.Play();
             grapplingGun.GetComponent<GrapplingGun>().hookShotAmmo += 1;
             uiManager.GetComponent<UIManager>().ammo = grapplingGun.GetComponent<GrapplingGun>().hookShotAmmo;
             Destroy(other.gameObject);
@@ -448,7 +462,7 @@ public class Movement : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            
+
             if (wallLeft)
             {
                 jump.Play();

@@ -18,6 +18,7 @@ public class GrapplingGun : MonoBehaviour
     private float maxDistance = 50f, fakePlatformTimer = 1f;
     public int hookShotAmmo = 0;
     private SpringJoint joint;
+    bool isNormalPlatform;
     RaycastHit raycastHit;
     public State state; // hold current state
     public enum State
@@ -97,7 +98,14 @@ public class GrapplingGun : MonoBehaviour
             joint.massScale = 4.5f;
 
             lr.positionCount = 2;
-
+            if(hit.collider.tag == "NormalPlatform")
+            {
+                isNormalPlatform = true;
+            }
+            else
+            {
+                isNormalPlatform = false;
+            }
             if (hit.collider.tag == "FakePlatform")
             {
                 StartCoroutine(FakePlatformFall(hit));
@@ -148,20 +156,25 @@ public class GrapplingGun : MonoBehaviour
         if (playerObj.GetComponent<Movement>().isSwinging == true)
         {
             // wait certain amount of seconds
-            Invoke("StopGrapple", 2.5f);
 
-            yield return new WaitForSeconds(2f);
+
+            yield return new WaitForSeconds(3.5f);
+
             hit.collider.gameObject.GetComponent<AudioSource>().enabled = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 10, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-            yield return new WaitForSeconds(0.5f);
-            ropeSnap.Play();
-            Destroy(hit.collider.gameObject, 4f);
+            if (!isNormalPlatform)
+            {
+                yield return new WaitForSeconds(0.5f);
+                Invoke("StopGrapple", 0.01f);
+                ropeSnap.Play();
+            }
+            Destroy(hit.collider.gameObject, 6f);
         }
         else if (state == State.HookshotRope)
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(2f);
             hit.collider.gameObject.GetComponent<AudioSource>().enabled = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 10, ForceMode.Force);
@@ -171,12 +184,12 @@ public class GrapplingGun : MonoBehaviour
         }
         else
         {
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(2f);
             hit.collider.gameObject.GetComponent<AudioSource>().enabled = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().useGravity = true;
             hit.collider.gameObject.GetComponent<Rigidbody>().AddForce(Vector3.down * 10, ForceMode.Force);
             hit.collider.gameObject.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
-            
+
             Destroy(hit.collider.gameObject, 5f);
         }
     }

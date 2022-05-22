@@ -7,7 +7,7 @@ public class PauseMenu : MonoBehaviour
     // bool is to tell the script whether or not the game is paused.
     public static bool gameIsPaused = false;
     // game object variable have been created to hold each UI panel so they can be activated and deactivated when required.
-    public GameObject instructionsMenu, pauseMenu;
+    public GameObject instructionsMenu, pauseMenu, winScreen;
     void Update()
     {
         // if player has pressed key "p" run code.
@@ -68,7 +68,8 @@ public class PauseMenu : MonoBehaviour
     // this is an option for the win panel which will display when the game has ended and will restart teh game session when invoked.
     public void Restart()
     {
-        SceneManager.LoadScene(0);
+        winScreen.SetActive(false);
+        SceneManager.LoadScene(1);
         Time.timeScale = 1f;
         gameIsPaused = false;
     }

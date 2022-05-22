@@ -4,5 +4,11 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Title Screen.unity
+    guid: 82e7a79c414f86140ac5adac27dab56a
+  - enabled: 1
+    path: Assets/Scenes/The_Ascent_Level_1.unity
+    guid: 2c9c0534ccf629f47a06dc285d219eaf
   m_configObjects: {}
