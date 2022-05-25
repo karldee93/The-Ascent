@@ -74,12 +74,12 @@ public class MeteorLogic : MonoBehaviour
             {
                 if (distToPlayer.magnitude < 4f)
                 {
-                    explosionForce = 100f;
+                    explosionForce = 1000f;
                     height = 0.5f;
                 }
                 else
                 {
-                    explosionForce = 1500f;
+                    explosionForce = 2500f;
                     height = 4f;
                 }
                 player.GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, radius, height, ForceMode.Force);
